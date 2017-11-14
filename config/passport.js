@@ -1,10 +1,10 @@
 //configuring the strategies for passport
 // load all the things we need
 var LocalStrategy   = require('passport-local').Strategy;
-var FacebookStrategy = require('passport-facebook').Strategy;
-var GoogleStrategy = require('passport-google-oauth2').Strategy;
+//var FacebookStrategy = require('passport-facebook').Strategy;
+//var GoogleStrategy = require('passport-google-oauth2').Strategy;
 var FitbitStrategy = require( 'passport-fitbit-oauth2' ).FitbitOAuth2Strategy;
-var OIDCStrategy = require('passport-azure-ad').OIDCStrategy;
+//var OIDCStrategy = require('passport-azure-ad').OIDCStrategy;
 
 // load up the user model
 var User            = require('../app/models/user');
@@ -164,6 +164,7 @@ passport.use(new FitbitStrategy({
     clientID:     configAuth.fitbitAuth.clientID,
     clientSecret: configAuth.fitbitAuth.clientSecret,
     callbackURL: configAuth.fitbitAuth.callbackURL,
+
   },
   function(accessToken, refreshToken, profile, done) {
     process.nextTick(function() {
@@ -200,162 +201,5 @@ passport.use(new FitbitStrategy({
     // =========================================================================
     // FACEBOOK ================================================================
     // =========================================================================
-    passport.use(new FacebookStrategy({
-
-        // pull in our app id and secret from our auth.js file
-        clientID        : configAuth.facebookAuth.clientID,
-        clientSecret    : configAuth.facebookAuth.clientSecret,
-        callbackURL     : configAuth.facebookAuth.callbackURL,
-        profileFields   : ['emails', 'displayName'] //check quotation marks, replace with single ones, change it in auth.js and test if it makes a differece
-    },
-
-    // google will send back the token and profile
-    function(token, refreshToken, profile, done) {
-
-        // asynchronous
-        process.nextTick(function() {
-
-            // find the user in the database based on their facebook id
-            User.findOne({ 'facebook.id' : profile.id }, function(err, user) {
-
-                // if there is an error, stop everything and return that
-                // ie an error connecting to the database
-                if (err)
-                    return done(err);
-
-                // if the user is found, then log them in
-                if (user) {
-                    return done(null, user); // user found, return that user
-                } else {
-                    // if there is no user found with that facebook id, create them
-                    var newUser            = new User();
-
-                    // set all of the facebook information in our user model
-                    newUser.facebook.id    = profile.id; // set the users facebook id
-                    newUser.facebook.token = token; // we will save the token that facebook provides to the user
-                    newUser.facebook.name  = profile.displayName; // look at the passport user profile to see how names are returned
-                    //Email for some reason sometimes causes errors, when commented it logs you in fine
-                    newUser.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
-                    // save our user to the database
-                    newUser.save(function(err) {
-                        if (err)
-                            throw err;
-
-                        // if successful, return the new user
-                        return done(null, newUser);
-                    });
-                }
-
-            });
-        });
-
-        //done(null, profile);
-
-    }));
-
-    // =========================================================================
-    // AZURE ADB2C LOGIN =======================================================
-    // =========================================================================
-    // This is for authenticating the user using Microsoft Azure ADB2C
-    passport.use(new OIDCStrategy({
-      redirectUrl: configAuth.azureAdb2c.redirectUrl, //*
-//      realm: configAuth.azureAdb2c.realm,
-      clientID: configAuth.azureAdb2c.clientID, //*
-//      oidcIssuer: configAuth.azureAdb2c.issuer,
-      identityMetadata: configAuth.azureAdb2c.identityMetadata, //*
-//      skipUserProfile: configAuth.azureAdb2c.skipUserProfile,
-      responseType: configAuth.azureAdb2c.responseType, //*
-      responseMode: configAuth.azureAdb2c.responseMode, //*
-      tenantName: configAuth.azureAdb2c.tenantName,
-      passReqToCallback : configAuth.azureAdb2c.passReqToCallback,
-      allowHttpForRedirectUrl: configAuth.azureAdb2c.allowHttpForRedirectUrl,
-      clientSecret : configAuth.azureAdb2c.clientSecret,
-//      isB2C : configAuth.azureAdb2c.isB2C,
-//      policyName : configAuth.azureAdb2c.policyName,
-//      validateIssuer: configAuth.azureAdb2c.validateIssuer,
-//      issuer: configAuth.azureAdb2c.issuer
-//      useCookieInsteadOfSession : configAuth.azureAdb2c.useCookieInsteadOfSession
-    },
-    function(iss, sub, profile, accessToken, refreshToken, done) { console.log("ERROR0");
-      // asynchronous verification, for effect...
-      process.nextTick(function () {
-        User.findOne({ 'azureAdb2c.oid' : profile.oid }, function(err, user) {
-
-          // if there is an error, stop everything and return that
-          // ie an error connecting to the database
-          if (err) {
-              console.log("ERROR1");
-              return done(err);
-          }
-
-          // if the user is found, then log them in
-          if (user) {
-              console.log("ERROR2");
-              console.log(user);
-              return done(null, user); // user found, return that user
-              console.log("ERROR22");
-          } else {
-              console.log("ERROR3");
-              // if there is no user found with that azureAdb2c id, create them
-              var newUser            = new User();
-              // set all of the azureAdb2c information in our user model
-              newUser.azureAdb2c.oid    = profile.oid; // set the users oid
-              newUser.azureAdb2c.token = accessToken; // we will save the token that azureAdb2c provides to the user
-              // save our user to the database
-              newUser.save(function(err) {
-                  if (err){
-                        console.log("ERROR4");
-                        throw err;
-                  }
-                  // if successful, return the new user
-                  return done(null, newUser);
-              });
-          }
-        });
-      });
-    }
-  ));
-
-
-    passport.use(new GoogleStrategy ({
-
-        // pull in our app id and secret from our auth.js file
-        clientID      : configAuth.googleFitAPI.clientID,
-        clientSecret    : configAuth.googleFitAPI.clientSecret,
-        callbackURL     : configAuth.googleFitAPI.callbackURL
-    },
-    function (token, refreshToken, profile, done) {
-      // asynchronous
-      process.nextTick(function() {
-
-          // find the user in the database based on their google id
-          User.findOne({'_id':passport.session.userID}, function(err, user) {
-              // if there is an error, stop everything and return that
-              // ie an error connecting to the database
-              if (err)
-                  return done(err);
-
-              // if the user is found, then log them in
-              if (user) {
-                user.publishers.googleFit.id           = profile.id; // set the users google id
-                user.publishers.googleFit.token        = token; // we will save the token that google provides to the user
-                user.publishers.googleFit.refreshToken = refreshToken;
-                console.log(refreshToken);
-                user.save(function(err) {
-                    if (err)
-                        throw err;
-
-                    // if successful, return the new user
-                    return done(null, user);
-                  });
-
-              } else {
-                    return done(null, user);
-              }
-
-          });
-        });
-    }));
-
-
-};
+   
+}

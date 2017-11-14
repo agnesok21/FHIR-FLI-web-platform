@@ -2,7 +2,7 @@
 
 // config/database.js
 module.exports = {
-
-    'url' : 'mongodb://nhcosmosdb:gMkvoCdBr6VKAhiwL8OL1vhf5M4rQ8Vt2cq3dEBhCh1UUVplQtB7ofgQBUTPRUZoXusRRgfwFnkU2rpeilYrkw==@nhcosmosdb.documents.azure.com:10255/?ssl=true&replicaSet=globaldb' // looks like mongodb://<user>:<pass>@mongo.onmodulus.net:27017/Mikha4ot
-
+	 //'url': 'mongodb://xcao67:healthgo@localhost:27017/healthgo'
+	 //'url': 'mongodb://localhost:27017/healthgo'
+	'url': 'mongodb://lindsay:lwj1991131@cluster0-shard-00-00-jmtde.mongodb.net:27017,cluster0-shard-00-01-jmtde.mongodb.net:27017,cluster0-shard-00-02-jmtde.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin'
 };

@@ -5,7 +5,7 @@ var refreshTokens = require('./refreshTokens.js');
 var fhir_converter = require('fhir-converter');
 
 exports.activity = function(user, callback, req, res){
-	Swipe.find({'memberId' : user.publishers.nuffield}).exec(function(err, swipes){
+	Swipe.find({'memberId' : user.publishers.fitbit}).exec(function(err, swipes){
 		if (err){
 			console.log(err);
 			return callback({}, req, res);
@@ -106,7 +106,8 @@ exports.steps24 = function(user, callback, req, res){
 		else {
 			var afterTokenRefresh = function(accessToken){
 				if (accessToken == ''){
-					console.log('Could Not Refresh Google Token');
+					console.log('Could Not Refresh fitbit Token');
+					//alert("Hello! I am an alert box!!");
 					return callback({}, req, res);
 				}
 				var now = new Date();
@@ -115,7 +116,7 @@ exports.steps24 = function(user, callback, req, res){
 				now = now.getTime();
 				midnight = midnight.getTime();
 				http.post({
-							url: "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
+							url: "GET https://api.fitbit.com/1/user/-/profile.json",
 							headers: {
 								'Content-Type': "application/json;encoding=utf-8",
 								'Authorization': "Bearer " + accessToken
@@ -281,7 +282,7 @@ exports.stepDist = function (user, callback, req, res) {
 		begining = begining.getTime();
 		begining -= 86400000*7;
 		http.post({
-					url: "https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate",
+					url: "GET https://api.fitbit.com/1/user/-/profile.json",
 					headers: {
 						'Content-Type': "application/json;encoding=utf-8",
 						'Authorization': "Bearer " + accessToken

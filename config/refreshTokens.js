@@ -9,16 +9,16 @@ exports.refreshGoogleToken = function(userID, callback){
         return callback('');
       }
 
-      if(u.publishers.googleFit.refreshToken){
+      if(u.publishers.fitbit.refreshToken){
         http.post({
-          url : 'https://www.googleapis.com/oauth2/v4/token',
+          url : 'https://api.fitbit.com/oauth2/token',
           headers : {
             "Content-Type" : "application/x-www-form-urlencoded"
           },
           form : {
-            "client_id"      : credentials.googleFitAPI.clientID,
-            "client_secret"  : credentials.googleFitAPI.clientSecret,
-            "refresh_token"  : u.publishers.googleFit.refreshToken,
+            "client_id"      : credentials.fitbitAuth.clientID,
+            "client_secret"  : credentials.fitbitAuth.clientSecret,
+            "refresh_token"  : u.publishers.fitbit.refreshToken,
             "grant_type"     : 'refresh_token'
           }
         }, function(err, resdata, tokendata) {

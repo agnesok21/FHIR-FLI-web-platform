@@ -18,24 +18,7 @@ var userSchema = mongoose.Schema({
         email        : String,
         name         : String
     },
-    azureAdb2c       : {
-      oid           : String,
-      token        : String,
-      email        : String,
-      name         : String
-    },
-    twitter          : {
-        id           : String,
-        token        : String,
-        displayName  : String,
-        username     : String
-    },
-    google           : {
-        id           : String,
-        token        : String,
-        email        : String,
-        name         : String
-    },
+
     userData         : {
         nickname     : String,
         email        : String,
@@ -47,13 +30,8 @@ var userSchema = mongoose.Schema({
     },
     publishers       : {
       startDate      : Date,
-      googleFit      : {
-        id           : String,
-        token        : String,
-        refreshToken : String
-      },
-      nuffield       : String, //This is the Nuffield Member ID, which is authenticated by the Nuffield Servers
-      healthKit      : String,
+      //This is the Nuffield Member ID, which is authenticated by the Nuffield Servers
+      
       fitbit         : {
         id           : String,
         token        : String,
@@ -80,5 +58,8 @@ userSchema.methods.validPassword = function(password) {
     return bcrypt.compareSync(password, this.local.password);
 };
 
-// create the model for users and expose it to our app
+// create the model for users and expose it to our app  or compile model from schema
 module.exports = mongoose.model('User', userSchema);
+/*
+Once you have defined your model classes you can use them to create, update, or delete records
+and run queries to get all records or particular subsets of records*/

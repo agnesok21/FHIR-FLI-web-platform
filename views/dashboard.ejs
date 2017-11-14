@@ -3,14 +3,223 @@
 <script src="/chartjs/js/vendor/modernizr-2.8.3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
 
+<script>
+    function ml_prediction() {
+        var calories_burned = document.getElementById("calories_burned").value;
+        var floors = document.getElementById("floors").value;
+        var minutes_sedentary = document.getElementById("minutes_sedentary").value;
+        var minutes_lightly_active = document.getElementById("minutes_lightly_active").value;
+        var minutes_fairly_active = document.getElementById("minutes_fairly_active").value;
+        var minutes_very_active = document.getElementById("minutes_very active").value;
+        var steps = document.getElementById("steps").value;
+        var distance = document.getElementById("distance").value;
+        var activity_calories = document.getElementById("activity_calories").value;
+        
+        //alert('awesome click triggered'); 
+        document.getElementById("demo2").innerHTML = `Based on your activities, you will have a good sleep tonight!`;
+        
+        const KNN = require('/ml-knn');       
+        
+        const csv = require('/csvtojson');
+        
+        
+       
+        //const prompt = require('prompt');
+        let knn;
+        const csvFilePath = '/fitbit.csv'; // Data
+        
+
+        const names = ['calories_burned', 'steps', 'distance', 'floors', 'minutes_sedentary', 'minutes_lightly_active', 'minutes_fairly_active', 'minutes_very active', 'activity_calories', 'type']; // For header
+
+        let seperationSize; // To seperate training and test data
+
+        let data = [], X = [], y = [];
+
+        let trainingSetX = [], trainingSetY = [], testSetX = [], testSetY = [];
+
+        csv({noheader: true, headers: names})
+            .fromFile(csvFilePath)
+            .on('json', (jsonObj) => {
+                data.push(jsonObj); // Push each object to data Array
+            })
+            .on('done', (error) => {
+                seperationSize = 0.7 * data.length;
+                data = shuffleArray(data);
+                dressData();
+            });
+        
+
+        function dressData() {
+
+            /**
+             * There are three different types of Iris flowers
+             * that this dataset classifies.
+             *
+             * 1. Iris Setosa (Iris-setosa)
+             * 2. Iris Versicolor (Iris-versicolor)
+             * 3. Iris Virginica (Iris-virginica)
+             *
+             * We are going to change these classes from Strings to numbers.
+             * Such that, a value of type equal to
+             * 0 would mean setosa,
+             * 1 would mean versicolor, and
+             * 3 would mean virginica
+             */
+
+            let types = new Set(); // To gather UNIQUE classes
+
+            data.forEach((row) => {
+                types.add(row.type);
+            });
+
+            typesArray = [...types]; // To save the different types of classes.
+
+            data.forEach((row) => {
+                let rowArray, typeNumber;
+
+                rowArray = Object.keys(row).map(key => parseFloat(row[key])).slice(0, 9);
+
+                typeNumber = typesArray.indexOf(row.type); // Convert type(String) to type(Number)
+
+                X.push(rowArray);
+                y.push(typeNumber);
+
+            });
+
+            let zero = 0;
+            let one = 0;
+            let two = 0;
+            for(var i = 0; i < y.length; i++){
+                if (y[i] == 0){
+                zero++;}
+                if(y[i] == 1){
+                    one++;
+
+
+                }
+                if(y[i] == 2){
+                    two++;
+                }
+            }
+            //console.log(zero, one, two);
+
+            trainingSetX = X.slice(0, seperationSize);
+            trainingSetY = y.slice(0, seperationSize);
+            testSetX = X.slice(seperationSize);
+            testSetY = y.slice(seperationSize);
+
+            train();
+        }
+
+        function train() {
+            knn = new KNN(trainingSetX, trainingSetY, {k: 3});
+            test();
+        }
+
+        function test() {
+            const result = knn.predict(testSetX);
+            const testSetLength = testSetX.length;
+            const predictionError = error(result, testSetY);
+            //console.log(`Test Set Size = ${testSetLength} and number of Misclassifications = ${predictionError}`);
+            document.getElementById("demo1").innerHTML = `Test Set Size = ${testSetLength} and number of Misclassifications = ${predictionError}`;
+            
+            predict();
+        }
+
+        function error(predicted, expected) {
+            let misclassifications = 0;
+            for (var index = 0; index < predicted.length; index++) {
+                if (predicted[index] !== expected[index]) {
+                    misclassifications++;
+                }
+            }
+            return misclassifications;
+        }
+        
+
+        function predict() {
+            
+        
+           
+            let temp = [calories_burned, steps, distance, floors, minutes_sedentary, minutes_lightly_active, minutes_fairly_active, minutes_very_active, activity_calories];
+            if(knn.predict(temp) == 0){
+                        type = 'good';			
+
+                    }
+            if(knn.predict(temp) == 1){
+                type = 'poor';			
+
+            }
+            if(knn.predict(temp) == 2){
+                type = 'fair';			
+
+            }
+            //console.log(`With ${temp} -- sleep quality is: ${type}`);
+            
+            //document.getElementById("demo2").innerHTML = `With ${temp} -- sleep quality is: ${type}`;
+            //document.getElementById("demo2").innerHTML = `Hi, I am here`;
+            
+        
+           /* prompt.start();
+            let type = '';*/
+
+          /*  prompt.get(['calories_burned', 'steps', 'distance', 'floors', 'minutes_sedentary', 'minutes_lightly_active', 'minutes_fairly_active', 'minutes_very active', 'activity_calories'], function (err, result) {
+                if (!err) {
+                    for (var key in result) {
+                        temp.push(parseFloat(result[key]));
+                    }
+                    if(knn.predict(temp) == 0){
+                        type = 'good';			
+
+                    }
+                    if(knn.predict(temp) == 1){
+                        type = 'poor';			
+
+                    }
+                    if(knn.predict(temp) == 2){
+                        type = 'fair';			
+
+                    }
+
+                    //console.log(`With ${temp} -- type =  ${knn.predict(temp)}`);
+
+                    console.log(`With ${temp} -- sleep quality is: ${type}`);
+                }
+            });*/
+        }
+
+        /**
+         * https://stackoverflow.com/a/12646864
+         * Randomize array element order in-place.
+         * Using Durstenfeld shuffle algorithm.
+         */
+        function shuffleArray(array) {
+            for (var i = array.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+            return array;
+        }    
+    }
+    
+</script>
+   <html>
+<!--    <head>
+       <script src = "index3.js"></script>
+        
+    </head>-->
+     <body>
+
         <div class="content">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-md-8">
+              <!--      <div class="col-md-8">
                         <div class="card">
                             <div class="header">
                                 <h4 class="title">Gym Sessions</h4>
-                                    <!-- Trigger the modal with a button -->
+                                     Trigger the modal with a button 
                                     <button type="button" class="btn btn-info btn-sm pull-right" data-toggle="modal" data-target="#myModalGym">Set Gym attendance goals</button>
                                 <p class="category">Gym Attendance By Week</p>
                             </div>
@@ -19,8 +228,8 @@
                                 <script src="/chartjs/js/gymByMonth.js"></script>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-4">
+                    </div>-->
+           <!--         <div class="col-md-4">
                         <div class="card">
                             <div class="header">
                                 <h4 class="title">Steps</h4>
@@ -32,8 +241,8 @@
                                 <script src="/chartjs/js/steps24.js"></script>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
+                    </div>-->
+               <!--     <div class="col-md-6">
                         <div class="card">
                             <div class="header">
                                 <h4 class="title">Gym Visits</h4>
@@ -44,8 +253,8 @@
                                 <script src="/chartjs/js/gymDist.js"></script>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
+                    </div>-->
+            <!--        <div class="col-md-6">
                         <div class="card">
                             <div class="header">
                                 <h4 class="title">Steps</h4>
@@ -56,8 +265,51 @@
                                 <script src="/chartjs/js/stepDist.js"></script>
                             </div>
                         </div>
+                    </div>-->
+                    <h4 class="title" ><strong>Your Daily Activities</strong></h4>
+                    <div class = "three_form">                
+                    Calories burned:
+                    <input type = "number"  id = "calories_burned" style = "width: 200px;" required />
+                    Steps:
+                    <input type = "number"  id = "steps" style = "width: 200px;" required />
+                    Distance:
+                    <input type = "number"  id = "distance" style = "width: 200px;" required />                                       
                     </div>
-                    <div class="col-xs-12">
+                   <div class = "three_form">
+                   Floors:                
+                   
+                    <input type = "number"  id = "floors" style = "width: 200px;" required />
+                    Minutes sedentary:
+                    <input type = "number"  id = "minutes_sedentary" style = "width: 200px;" required />
+                    Minutes lightly active:
+                    <input type = "number" id = "minutes_lightly_active" style = "width: 200px;" required />                                       
+                   </div>
+                   <div class = "three_form">  
+                   Minutes fairly active:              
+                   
+                    <input type = "number" id = "minutes_fairly_active" style = "width: 200px;" required />
+                    Minutes very active:
+                    <input type = "number"  id = "minutes_very active" style = "width: 200px;" required />
+                    Activity calories:
+                    <input type = "number"  id = "activity_calories" style = "width: 200px;" required />                                       
+                   </div>
+                   <p>Click the button to predict</p>                   
+
+                    <button type = "button" onClick = "ml_prediction()">Predict</button>
+              <!--      <script type = "text/javascript">
+                        var myLink = document.getElementById('mylink');
+                        mylink.onclick = function(){
+                            var script = document.createElement("script");
+                            script.type = "text/javascript";
+                            script.src = "/views/index3.js"
+                        }
+                    </script>-->
+                 
+                    <h4 class="title"><strong>Sleep Quality Prediction Results</strong></h4>
+                    <p id="demo1"></p>
+                    <p id="demo2"></p>
+                   
+  <!--                  <div class="col-xs-12">
                         <div class="card">
                             <div class="header">
                                 <h4 class="title">Upcoming Class Bookings</h4>
@@ -69,7 +321,7 @@
                             <script src="/js/bookings.js"></script>
                         </div>
                     </div>
-                    <!-- <div class="col-md-8">
+                     <div class="col-md-8">
                         <div class="card">
                             <div class="header">
                                 <h4 class="title"></h4>
@@ -81,8 +333,8 @@
                                 <script src="/chartjs/js/polar.js"></script>
                             </div>
                         </div>
-                    </div> -->
-                </div>
+                    </div> 
+                </div>-->
             </div>
           </div>
 
@@ -107,7 +359,7 @@
 
     </div>
 
-</div>
+
 	<script type="text/javascript">
     	$(document).ready(function(){
 
@@ -124,3 +376,5 @@
 
     	});
 	</script>
+	</body>
+</html>
